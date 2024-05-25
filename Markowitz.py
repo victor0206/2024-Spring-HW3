@@ -66,7 +66,14 @@ class EqualWeightPortfolio:
         """
         TODO: Complete Task 1 Below
         """
-
+        for i in self.portfolio_weights.index:
+            for j in self.portfolio_weights.columns:
+                if j in assets:
+                    self.portfolio_weights.loc[i, j] = 1 / len(assets)
+                else :
+                    self.portfolio_weights.loc[i, j] = 0
+       # self.portfolio_weights.loc[:, assets] = 1 / len(assets)
+       # print(self.portfolio_weights, len(assets))
         """
         TODO: Complete Task 1 Above
         """
@@ -117,6 +124,32 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
+        self.portfolio_returns = df_returns.copy()
+        cnt = 0
+        for i in self.portfolio_weights.index:
+            cnt += 1
+            if cnt <= self.lookback + 1:
+                for j in self.portfolio_weights.columns:
+                    self.portfolio_weights.loc[i, j] = 0
+            else :
+                dev = []
+                for j in assets:
+                    arr = []
+                    for k in range(cnt - self.lookback - 1, cnt - 1):
+                        date  = self.portfolio_weights.index[k]
+                        arr.append(self.portfolio_returns.loc[date, j])
+                    dev.append(np.std(arr))
+
+                cntj = 0
+                total = 0
+                for j in dev:
+                    total = total + 1 / j
+                for j in self.portfolio_weights.columns:
+                    if j in assets:
+                        self.portfolio_weights.loc[i, j] = (1 / dev[cntj]) / total
+                        cntj += 1
+                    else :
+                        self.portfolio_weights.loc[i, j] = 0
 
         """
         TODO: Complete Task 2 Above
@@ -189,12 +222,14 @@ class MeanVariancePortfolio:
                 """
                 TODO: Complete Task 3 Below
                 """
-
                 # Sample Code: Initialize Decision w and the Objective
                 # NOTE: You can modify the following code
-                w = model.addMVar(n, name="w", ub=1)
-                model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
 
+                w = model.addMVar(n, name="w", ub=1, lb=0)
+                model.setObjective(w.T @ mu - gamma/2 * w.T @ Sigma @ w, gp.GRB.MAXIMIZE)
+                model.addConstr(w.sum() == 1, name="ooooooo")
+                
+                
                 """
                 TODO: Complete Task 3 Below
                 """
